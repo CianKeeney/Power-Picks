@@ -47,9 +47,20 @@ export default function Home() {
           <div className="max-w-2xl text-white">
             <h1 className="text-5xl font-bold mb-4">Win Amazing Prizes</h1>
             <p className="text-xl mb-8">Enter our exciting raffles for a chance to win incredible prizes. From luxury cars to dream vacations, your next big win could be just a ticket away!</p>
-            <button className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors">
-              View Active Raffles
-            </button>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => window.location.href = '/login'}
+                className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              >
+                User Sign In
+              </button>
+              <button 
+                onClick={() => window.location.href = '/admin/login'}
+                className="bg-blue-800 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors"
+              >
+                Admin Sign In
+              </button>
+            </div>
           </div>
         </div>
       </section>

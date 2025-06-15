@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function AdminLogin() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export default function UserLogin() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -18,15 +18,13 @@ export default function AdminLogin() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
       if (error) throw error;
-
+      
       if (data.user) {
         // Check if user has admin role
         const { data: roleData, error: roleError } = await supabase
@@ -34,18 +32,34 @@ export default function AdminLogin() {
 
         if (roleError) throw roleError;
 
-        if (!roleData) {
+        if (roleData) {
           await supabase.auth.signOut();
-          throw new Error('Access denied. Admin privileges required.');
+          throw new Error('Please use the admin login page.');
         }
 
-        router.push('/admin/dashboard');
+        // Ensure user has a role assigned
+        const { data: userRole, error: userRoleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (userRoleError || !userRole) {
+          // Assign user role if not exists
+          const { error: insertError } = await supabase
+            .from('user_roles')
+            .insert([{ user_id: data.user.id, role: 'user' }]);
+
+          if (insertError) throw insertError;
+        }
+
+        router.push("/dashboard");
       }
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
       } else {
-        setError('An unknown error occurred.');
+        setError("An unknown error occurred.");
       }
     } finally {
       setLoading(false);
@@ -56,8 +70,8 @@ export default function AdminLogin() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Admin Login</CardTitle>
-          <CardDescription>Enter your credentials to access the admin dashboard</CardDescription>
+          <CardTitle>User Login</CardTitle>
+          <CardDescription>Sign in to your account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -71,7 +85,7 @@ export default function AdminLogin() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="admin@example.com"
+                placeholder="you@example.com"
               />
             </div>
             <div className="space-y-2">
@@ -87,16 +101,13 @@ export default function AdminLogin() {
                 placeholder="••••••••"
               />
             </div>
-            {error && (
-              <div className="text-red-500 text-sm">{error}</div>
-            )}
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? 'Signing in...' : 'Sign in'}
+            {error && <div className="text-red-500 text-sm">{error}</div>}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing in..." : "Sign in"}
             </Button>
+            <div className="text-center text-sm mt-4">
+              Don&apos;t have an account? <a href="/register" className="text-blue-600 hover:underline">Register</a>
+            </div>
           </form>
         </CardContent>
       </Card>
